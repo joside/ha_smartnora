@@ -58,6 +58,7 @@ class NoraBridge:
         self._nora_tree: dict[str, Any] = {}
         self._errors: dict[str, str] = {}
         self.connected = False
+        self._sync_lock = asyncio.Lock()
 
     # ---------------------------------------------------------- lifecycle --
     async def async_start(self) -> None:
@@ -115,6 +116,8 @@ class NoraBridge:
                     area_id = dev.area_id
             area = area_reg.async_get_area(area_id) if area_id else None
             adapter = cls(self.hass, entity_id, name, area.name if area else None)
+            if entry and entry.capabilities:
+                adapter.capabilities = dict(entry.capabilities)
             self.adapters[adapter.device_id] = adapter
             self._by_entity[entity_id] = adapter
 
@@ -132,13 +135,17 @@ class NoraBridge:
         return sorted((a.definition() for a in self.adapters.values()), key=lambda d: d["id"])
 
     async def _async_sync(self, force: bool = False) -> None:
-        devices = self._definitions()
-        sync_hash = _hash([{k: v for k, v in d.items() if k != "state"} for d in devices])
-        if not force and sync_hash == self._last_sync_hash:
-            return
-        await self.client.async_sync(devices)
-        self._last_sync_hash = sync_hash
-        _LOGGER.info("synced %d device(s) to Smart NORA group %s", len(devices), self.client.group)
+        async with self._sync_lock:
+            devices = self._definitions()
+            sync_hash = _hash([{k: v for k, v in d.items() if k != "state"} for d in devices])
+            if not force and sync_hash == self._last_sync_hash:
+                return
+            await self.client.async_sync(devices)
+            self._last_sync_hash = sync_hash
+            self._reported.clear()  # definitions changed: report all states again
+            _LOGGER.info(
+                "synced %d device(s) to Smart NORA group %s", len(devices), self.client.group
+            )
 
     @callback
     def _schedule_sync(self) -> None:
@@ -151,6 +158,9 @@ class NoraBridge:
 
     # ------------------------------------------------------- report state --
     async def _async_report(self, adapter: Adapter) -> None:
+        # capabilities may have changed (e.g. entity became available): sync first,
+        # otherwise Smart NORA rejects the state ("must NOT have additional properties")
+        await self._async_sync()
         state = adapter.state()
         state_hash = _hash(state)
         if self._reported.get(adapter.device_id) == state_hash:
@@ -163,7 +173,6 @@ class NoraBridge:
         adapter = self._by_entity.get(event.data["entity_id"])
         if adapter is None:
             return
-        self._schedule_sync()  # e.g. light got dimmable after becoming available
         if handle := self._report_handles.get(adapter.device_id):
             handle.cancel()
         self._report_handles[adapter.device_id] = self.hass.loop.call_later(

@@ -102,3 +102,16 @@ async def test_light_keeps_color_while_off(hass: HomeAssistant) -> None:
     assert state["color"] == {"spectrumRgb": 0x00FF00}
     cmds = adapter.commands_for(state, {**state, "on": True})
     assert (cmds[0].service, cmds[0].data) == ("turn_on", {"entity_id": "light.wled"})
+
+
+async def test_light_capabilities_while_unavailable(hass: HomeAssistant) -> None:
+    """During HA start WLED is unavailable: traits come from the entity registry."""
+    hass.states.async_set("light.wled", "unavailable", {})
+    adapter = LightAdapter(hass, "light.wled", "Streifen", "Wohnzimmer")
+    adapter.capabilities = {"supported_color_modes": ["rgb"], "effect_list": ["Solid"]}
+    assert adapter.traits_for() == [
+        "action.devices.traits.OnOff",
+        "action.devices.traits.Brightness",
+        "action.devices.traits.ColorSetting",
+    ]
+    assert adapter.state()["online"] is False

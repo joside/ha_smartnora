@@ -57,10 +57,20 @@ class Adapter:
         self.device_id = escape_firebase_path(entity_id)
         self.name = name
         self.room = room
+        # entity registry capabilities: available even while the entity is unavailable
+        self.capabilities: dict[str, Any] = {}
 
     @property
     def ha_state(self) -> State | None:
         return self.hass.states.get(self.entity_id)
+
+    def attr(self, key: str, default: Any = None) -> Any:
+        """State attribute, falling back to the registry capabilities."""
+        st = self.ha_state
+        value = st.attributes.get(key) if st else None
+        if value is None:
+            value = self.capabilities.get(key)
+        return default if value is None else value
 
     def attributes(self) -> dict[str, Any]:
         return {}
@@ -128,8 +138,7 @@ class LightAdapter(OnOffAdapter):
         self._last_rgb = 0xFFFFFF
 
     def _modes(self) -> set[str]:
-        st = self.ha_state
-        return set((st.attributes.get("supported_color_modes") or []) if st else [])
+        return set(self.attr("supported_color_modes", []))
 
     def _dimmable(self) -> bool:
         return any(m != "onoff" for m in self._modes())
@@ -186,9 +195,8 @@ class LightAdapter(OnOffAdapter):
         rgb = (new.get("color") or {}).get("spectrumRgb")
         if rgb is not None and rgb != (old.get("color") or {}).get("spectrumRgb"):
             data["rgb_color"] = [(rgb >> 16) & 0xFF, (rgb >> 8) & 0xFF, rgb & 0xFF]
-            st = self.ha_state
             # a colour request means a solid colour (as the Node-RED flows did with fx: 0)
-            if st and "Solid" in (st.attributes.get("effect_list") or []):
+            if "Solid" in self.attr("effect_list", []):
                 data["effect"] = "Solid"
         if len(data) > 1 or not old.get("on"):
             return [Command("light", "turn_on", data)]
@@ -225,17 +233,15 @@ class ThermostatAdapter(Adapter):
     traits = ["action.devices.traits.TemperatureSetting"]
 
     def attributes(self):
-        st = self.ha_state
-        modes = [HVAC_TO_GOOGLE[m] for m in (st.attributes.get("hvac_modes", []) if st else [])
-                 if m in HVAC_TO_GOOGLE]
+        modes = [HVAC_TO_GOOGLE[m] for m in self.attr("hvac_modes", []) if m in HVAC_TO_GOOGLE]
         attrs: dict[str, Any] = {
             "availableThermostatModes": modes or ["off", "heat"],
             "thermostatTemperatureUnit": "C",
         }
-        if st and st.attributes.get("min_temp") is not None and st.attributes.get("max_temp") is not None:
+        if self.attr("min_temp") is not None and self.attr("max_temp") is not None:
             attrs["thermostatTemperatureRange"] = {
-                "minThresholdCelsius": float(st.attributes["min_temp"]),
-                "maxThresholdCelsius": float(st.attributes["max_temp"]),
+                "minThresholdCelsius": float(self.attr("min_temp")),
+                "maxThresholdCelsius": float(self.attr("max_temp")),
             }
         return attrs
 
