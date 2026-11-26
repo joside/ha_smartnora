@@ -9,6 +9,13 @@
           "password": "Passwort",
           "group": "Gruppe"
         }
+      },
+      "reauth_confirm": {
+        "title": "Erneut anmelden",
+        "description": "Das Passwort für {email} ist nicht mehr gültig.",
+        "data": {
+          "password": "Passwort"
+        }
       }
     },
     "error": {
@@ -16,7 +23,8 @@
       "cannot_connect": "Keine Verbindung zu Smart NORA"
     },
     "abort": {
-      "already_configured": "Dieses Konto mit dieser Gruppe ist bereits eingerichtet"
+      "already_configured": "Dieses Konto mit dieser Gruppe ist bereits eingerichtet",
+      "reauth_successful": "Erneute Anmeldung erfolgreich"
     }
   },
   "options": {

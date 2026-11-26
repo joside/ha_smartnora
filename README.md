@@ -19,8 +19,21 @@ Raum = HA-Bereich der Entität (bzw. ihres Geräts), Name = Anzeigename.
 
 ## Installation
 
-1. `custom_components/smartnora` nach `config/custom_components/` kopieren (oder per HACS als benutzerdefiniertes Repo).
-2. HA neu starten → *Einstellungen → Geräte & Dienste → Integration hinzufügen → Smart NORA*.
+### HACS (empfohlen)
+
+[![In HACS öffnen](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=joside&repository=ha_smartnora&category=integration)
+
+1. HACS → ⋮ → *Benutzerdefinierte Repositories* → `https://github.com/joside/ha_smartnora`, Typ *Integration*.
+2. „Smart NORA“ herunterladen und Home Assistant neu starten.
+
+### Manuell
+
+`custom_components/smartnora` nach `config/custom_components/` kopieren und HA neu starten.
+
+### Einrichtung
+
+1. [![Integration hinzufügen](https://my.home-assistant.io/badges/config_flow_start.svg)](https://my.home-assistant.io/redirect/config_flow_start/?domain=smartnora)
+   bzw. *Einstellungen → Geräte & Dienste → Integration hinzufügen → Smart NORA*.
 3. Smart-NORA-Zugangsdaten eingeben. **Gruppe** frei wählen (Standard `homeassistant`), aber **nicht** die Gruppe aus Node-RED.
 4. *Konfigurieren* → Entitäten auswählen. Nach dem Speichern synchronisiert die Integration mit Google.
 
@@ -30,7 +43,21 @@ Unterschiedliche Gruppen laufen parallel. Gleich benannte Geräte (z. B. eine Sz
 verwirren Google – Szenen also einzeln umziehen: in HA anlegen, freigeben, den Node-RED-Node entfernen.
 Google-Routinen, die auf alte Geräte zeigen, müssen neu verknüpft werden.
 
+## Fehlersuche
+
+```yaml
+logger:
+  logs:
+    custom_components.smartnora: debug
+```
+
 ## Noch nicht umgesetzt
 
 Lokale Ausführung (UDP), SSO-Login, Farbe/Farbtemperatur bei Lichtern, Rollläden, Sensoren,
 Benachrichtigungen, Zwei-Faktor (PIN), Namen/Räume per Optionen überschreiben.
+
+## Danke
+
+Smart NORA und das Node-RED-Plugin stammen von [Andrei Tatar](https://github.com/andrei-tatar).
+Diese Integration ist ein unabhängiger Nachbau und nicht offiziell mit Smart NORA verbunden.
+Für Google-Home-Geräte ist ein Smart-NORA-Konto nötig (kostenlos bis 5 Geräte, darüber Abo).

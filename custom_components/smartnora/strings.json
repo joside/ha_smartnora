@@ -9,6 +9,13 @@
           "password": "Password",
           "group": "Group"
         }
+      },
+      "reauth_confirm": {
+        "title": "Re-authenticate",
+        "description": "The password for {email} is no longer valid.",
+        "data": {
+          "password": "Password"
+        }
       }
     },
     "error": {
@@ -16,7 +23,8 @@
       "cannot_connect": "Cannot connect to Smart NORA"
     },
     "abort": {
-      "already_configured": "This account and group are already configured"
+      "already_configured": "This account and group are already configured",
+      "reauth_successful": "Re-authentication successful"
     }
   },
   "options": {
