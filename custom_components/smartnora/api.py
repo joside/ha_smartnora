@@ -13,6 +13,7 @@ See PROTOCOL.md in the repository root for details.
 from __future__ import annotations
 
 import asyncio
+import base64
 from collections.abc import Awaitable, Callable
 import gzip
 import json
@@ -25,6 +26,7 @@ import aiohttp
 
 from .const import (
     API_ENDPOINT,
+    AUTH_CUSTOM_TOKEN_URL,
     AUTH_REFRESH_URL,
     AUTH_SIGNIN_URL,
     FIREBASE_API_KEY,
@@ -61,38 +63,80 @@ def escape_firebase_path(value: str) -> str:
     return value
 
 
-class NoraAuth:
-    """Firebase email/password authentication with automatic refresh."""
+def _jwt_claims(token: str) -> dict[str, Any]:
+    """Decode the (unverified) payload of a Firebase ID token."""
+    payload = token.split(".")[1]
+    payload += "=" * (-len(payload) % 4)
+    return json.loads(base64.urlsafe_b64decode(payload))
 
-    def __init__(self, session: aiohttp.ClientSession, email: str, password: str) -> None:
+
+class NoraAuth:
+    """Firebase authentication (email/password or Smart NORA SSO token)."""
+
+    def __init__(
+        self,
+        session: aiohttp.ClientSession,
+        email: str | None = None,
+        password: str | None = None,
+        sso: str | None = None,
+    ) -> None:
         self._session = session
         self._email = email
         self._password = password
+        self._sso = sso
         self._id_token: str | None = None
         self._refresh_token: str | None = None
         self._expires_at = 0.0
         self._lock = asyncio.Lock()
         self.uid: str | None = None
+        self.email: str | None = email
 
     async def async_login(self) -> None:
-        """Sign in with email and password."""
-        async with self._session.post(
-            AUTH_SIGNIN_URL,
-            params={"key": FIREBASE_API_KEY},
-            json={
-                "email": self._email,
-                "password": self._password,
-                "returnSecureToken": True,
-            },
-        ) as resp:
+        """Sign in (signInWithEmailAndPassword / signInWithCustomToken)."""
+        if self._password:
+            data = await self._async_identity_call(
+                AUTH_SIGNIN_URL,
+                {"email": self._email, "password": self._password, "returnSecureToken": True},
+            )
+        elif self._sso:
+            custom_token = await self._async_exchange_sso()
+            data = await self._async_identity_call(
+                AUTH_CUSTOM_TOKEN_URL, {"token": custom_token, "returnSecureToken": True}
+            )
+        else:
+            raise NoraAuthError("neither password nor SSO token configured")
+        self._store(data["idToken"], data["refreshToken"], data["expiresIn"])
+        claims = _jwt_claims(data["idToken"])
+        self.uid = data.get("localId") or claims.get("user_id") or claims.get("sub")
+        self.email = self.email or claims.get("email")
+
+    async def _async_identity_call(self, url: str, body: dict[str, Any]) -> dict[str, Any]:
+        async with self._session.post(url, params={"key": FIREBASE_API_KEY}, json=body) as resp:
             data = await resp.json(content_type=None)
             if resp.status != 200:
                 message = (data or {}).get("error", {}).get("message", "")
                 if resp.status == 400:
                     raise NoraAuthError(message or "login rejected")
                 raise NoraError(f"login failed: HTTP {resp.status} {message}")
-        self._store(data["idToken"], data["refreshToken"], data["expiresIn"])
-        self.uid = data["localId"]
+        return data
+
+    async def _async_exchange_sso(self) -> str:
+        """POST /sso/exchange: Smart NORA SSO token -> Firebase custom token."""
+        async with self._session.post(
+            f"{API_ENDPOINT}/sso/exchange",
+            data=gzip.compress(json.dumps({"token": self._sso}).encode()),
+            headers={
+                "user-agent": USER_AGENT,
+                "content-type": "application/json",
+                "content-encoding": "gzip",
+            },
+        ) as resp:
+            if resp.status == 400:
+                raise NoraAuthError(f"invalid SSO token: {await resp.text()}")
+            if resp.status != 200:
+                raise NoraHttpError(resp.status, await resp.text())
+            data = await resp.json(content_type=None)
+        return data["token"]
 
     async def _async_refresh(self) -> None:
         async with self._session.post(

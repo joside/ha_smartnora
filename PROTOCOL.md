@@ -32,7 +32,12 @@ den neuen Zustand in die Datenbank; der Client reagiert darauf.
   mit `{email, password, returnSecureToken: true}` → `idToken`, `refreshToken`, `expiresIn` (3600 s), `localId` (= uid).
 - Token-Erneuerung: `POST https://securetoken.googleapis.com/v1/token?key=<API_KEY>`, `grant_type=refresh_token`.
 - **SSO** (Alternative): `POST https://api.smart-nora.eu/sso/exchange` mit `{token}` → Custom-Token → `signInWithCustomToken`.
-  Im Prototyp nicht umgesetzt.
+  Das SSO-Token stammt von `https://smart-nora.eu/my-nora/sso`: Die Seite holt es mit der Web-Sitzung über
+  `GET api/sso/token` und schickt es per `window.opener.postMessage({type: 'nora-sso-token', email, token}, '*')`
+  an das öffnende Fenster (ohne `window.opener` leitet sie weg). Das Token ist dauerhaft und wird bei jeder
+  Anmeldung neu getauscht. REST: `POST identitytoolkit…/accounts:signInWithCustomToken?key=…` mit
+  `{token, returnSecureToken: true}`; die uid steht im ID-Token (`user_id`). ha_smartnora liefert dafür die
+  Hilfsseite `/api/smartnora/sso`.
 - Bei Fehlern: neuer Versuch nach 30–90 s (zufällig).
 
 ## 2. Gruppe

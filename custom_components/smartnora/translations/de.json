@@ -3,23 +3,40 @@
     "step": {
       "user": {
         "title": "Smart NORA",
-        "description": "Melde dich mit deinem Smart-NORA-Konto an. Die Gruppe muss sich von der Gruppe in Node-RED unterscheiden, sonst werden die Node-RED-Geräte überschrieben.",
+        "description": "Wie meldest du dich bei smart-nora.eu an?",
+        "menu_options": {
+          "sso": "Google-Login (SSO-Token)",
+          "password": "E-Mail und Passwort"
+        }
+      },
+      "password": {
+        "title": "E-Mail und Passwort",
+        "description": "Die Gruppe muss sich von der Gruppe in Node-RED unterscheiden, sonst werden die Node-RED-Geräte überschrieben.",
         "data": {
           "email": "E-Mail",
           "password": "Passwort",
           "group": "Gruppe"
         }
       },
+      "sso": {
+        "title": "Google-Login",
+        "description": "1. Öffne die [Hilfsseite]({helper_url}) und melde dich dort mit Google an.\n2. Kopiere das angezeigte SSO-Token und füge es hier ein.\n\nDie Gruppe muss sich von der Gruppe in Node-RED unterscheiden, sonst werden die Node-RED-Geräte überschrieben.",
+        "data": {
+          "sso": "SSO-Token",
+          "group": "Gruppe"
+        }
+      },
       "reauth_confirm": {
         "title": "Erneut anmelden",
-        "description": "Das Passwort für {email} ist nicht mehr gültig.",
+        "description": "Die Zugangsdaten für {email} sind nicht mehr gültig. Bei Google-Login holst du über die [Hilfsseite]({helper_url}) ein neues Token.",
         "data": {
-          "password": "Passwort"
+          "password": "Passwort",
+          "sso": "SSO-Token"
         }
       }
     },
     "error": {
-      "invalid_auth": "E-Mail oder Passwort ungültig",
+      "invalid_auth": "Zugangsdaten oder SSO-Token ungültig",
       "cannot_connect": "Keine Verbindung zu Smart NORA"
     },
     "abort": {

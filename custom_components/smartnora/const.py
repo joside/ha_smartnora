@@ -6,6 +6,7 @@ DOMAIN = "smartnora"
 VERSION = "0.1.0"
 
 CONF_GROUP = "group"
+CONF_SSO = "sso"
 CONF_ENTITIES = "entities"
 DEFAULT_GROUP = "homeassistant"
 
@@ -15,11 +16,15 @@ DEFAULT_GROUP = "homeassistant"
 FIREBASE_API_KEY = "AIzaSyCE4ogvmNJG8Vvkzf1wfWKhjzCALlLGLsw"
 FIREBASE_DB_URL = "https://nora-firebase-default-rtdb.europe-west1.firebasedatabase.app"
 API_ENDPOINT = "https://api.smart-nora.eu"
+SSO_URL = "https://smart-nora.eu/my-nora/sso"
 
 AUTH_SIGNIN_URL = (
     "https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword"
 )
-AUTH_REFRESH_URL = "https://securetoken.googleapis.com/v1/token"
+AUTH_CUSTOM_TOKEN_URL = (
+    "https://identitytoolkit.googleapis.com/v1/accounts:signInWithCustomToken"
+)
+AUTH_REFRESH_URL ="https://securetoken.googleapis.com/v1/token"
 
 USER_AGENT = f"ha-smartnora/{VERSION}"
 

@@ -3,23 +3,40 @@
     "step": {
       "user": {
         "title": "Smart NORA",
-        "description": "Log in with your Smart NORA account. The group must differ from the group used by Node-RED, otherwise the Node-RED devices are overwritten.",
+        "description": "How do you sign in to smart-nora.eu?",
+        "menu_options": {
+          "sso": "Google sign-in (SSO token)",
+          "password": "Email and password"
+        }
+      },
+      "password": {
+        "title": "Email and password",
+        "description": "The group must differ from the group used by Node-RED, otherwise the Node-RED devices are overwritten.",
         "data": {
           "email": "Email",
           "password": "Password",
           "group": "Group"
         }
       },
+      "sso": {
+        "title": "Google sign-in",
+        "description": "1. Open the [helper page]({helper_url}) and sign in with Google.\n2. Copy the SSO token shown there and paste it here.\n\nThe group must differ from the group used by Node-RED, otherwise the Node-RED devices are overwritten.",
+        "data": {
+          "sso": "SSO token",
+          "group": "Group"
+        }
+      },
       "reauth_confirm": {
         "title": "Re-authenticate",
-        "description": "The password for {email} is no longer valid.",
+        "description": "The credentials for {email} are no longer valid. For Google sign-in get a new token via the [helper page]({helper_url}).",
         "data": {
-          "password": "Password"
+          "password": "Password",
+          "sso": "SSO token"
         }
       }
     },
     "error": {
-      "invalid_auth": "Invalid email or password",
+      "invalid_auth": "Invalid credentials or SSO token",
       "cannot_connect": "Cannot connect to Smart NORA"
     },
     "abort": {

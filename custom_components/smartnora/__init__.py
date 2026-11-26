@@ -12,7 +12,7 @@ from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
 from .api import NoraAuth, NoraAuthError, NoraClient, NoraError
 from .bridge import NoraBridge
-from .const import CONF_ENTITIES, CONF_GROUP, DEFAULT_GROUP
+from .const import CONF_ENTITIES, CONF_GROUP, CONF_SSO, DEFAULT_GROUP
 
 type SmartNoraConfigEntry = ConfigEntry[NoraBridge]
 
@@ -20,7 +20,12 @@ type SmartNoraConfigEntry = ConfigEntry[NoraBridge]
 async def async_setup_entry(hass: HomeAssistant, entry: SmartNoraConfigEntry) -> bool:
     """Set up Smart NORA from a config entry."""
     session = async_get_clientsession(hass)
-    auth = NoraAuth(session, entry.data[CONF_EMAIL], entry.data[CONF_PASSWORD])
+    auth = NoraAuth(
+        session,
+        email=entry.data.get(CONF_EMAIL),
+        password=entry.data.get(CONF_PASSWORD),
+        sso=entry.data.get(CONF_SSO),
+    )
     try:
         await auth.async_login()
     except NoraAuthError as err:

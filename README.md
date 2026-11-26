@@ -34,8 +34,14 @@ Raum = HA-Bereich der Entität (bzw. ihres Geräts), Name = Anzeigename.
 
 1. [![Integration hinzufügen](https://my.home-assistant.io/badges/config_flow_start.svg)](https://my.home-assistant.io/redirect/config_flow_start/?domain=smartnora)
    bzw. *Einstellungen → Geräte & Dienste → Integration hinzufügen → Smart NORA*.
-3. Smart-NORA-Zugangsdaten eingeben. **Gruppe** frei wählen (Standard `homeassistant`), aber **nicht** die Gruppe aus Node-RED.
-4. *Konfigurieren* → Entitäten auswählen. Nach dem Speichern synchronisiert die Integration mit Google.
+2. Anmeldeart wählen:
+   - **Google-Login (SSO-Token):** Im Dialog die *Hilfsseite* öffnen (`/api/smartnora/sso` auf deinem HA),
+     dort *Anmelden* klicken, im Popup mit Google anmelden, Token kopieren und einfügen.
+     Popup-Blocker für deine HA-Adresse ggf. erlauben.
+   - **E-Mail und Passwort:** für Konten mit Passwort.
+
+   Zugangsdaten bzw. Token eingeben. **Gruppe** frei wählen (Standard `homeassistant`), aber **nicht** die Gruppe aus Node-RED.
+3. *Konfigurieren* → Entitäten auswählen. Nach dem Speichern synchronisiert die Integration mit Google.
 
 ## Parallelbetrieb mit Node-RED
 
@@ -53,7 +59,7 @@ logger:
 
 ## Noch nicht umgesetzt
 
-Lokale Ausführung (UDP), SSO-Login, Farbe/Farbtemperatur bei Lichtern, Rollläden, Sensoren,
+Lokale Ausführung (UDP), Farbe/Farbtemperatur bei Lichtern, Rollläden, Sensoren,
 Benachrichtigungen, Zwei-Faktor (PIN), Namen/Räume per Optionen überschreiben.
 
 ## Danke

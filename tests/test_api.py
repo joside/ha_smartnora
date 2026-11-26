@@ -1,6 +1,9 @@
 """Tests for the Firebase stream mirror and helpers."""
 
-from custom_components.smartnora.api import apply_stream_event, escape_firebase_path
+import base64
+import json
+
+from custom_components.smartnora.api import _jwt_claims, apply_stream_event, escape_firebase_path
 
 
 def test_escape_firebase_path():
@@ -34,3 +37,8 @@ def test_put_nested_and_delete():
 def test_patch_root():
     tree = apply_stream_event({"a": 1}, "patch", "/", {"b": 2, "a": None})
     assert tree == {"b": 2}
+
+
+def test_jwt_claims():
+    payload = base64.urlsafe_b64encode(json.dumps({"user_id": "u1", "email": "a@b.c"}).encode()).decode().rstrip("=")
+    assert _jwt_claims(f"h.{payload}.s") == {"user_id": "u1", "email": "a@b.c"}
