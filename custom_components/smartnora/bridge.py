@@ -107,10 +107,10 @@ class NoraBridge:
             cls = ADAPTERS.get(entity_id.split(".")[0])
             if cls is None:
                 continue
-            state = self.hass.states.get(entity_id)
-            name = state.name if state else entity_id
             area_id = None
+            name = entity_id
             if entry := ent_reg.async_get(entity_id):
+                name = self._registry_name(entry, dev_reg) or entity_id
                 area_id = entry.area_id
                 if not area_id and entry.device_id and (dev := dev_reg.async_get(entry.device_id)):
                     area_id = dev.area_id
@@ -129,6 +129,18 @@ class NoraBridge:
                 object_id = adapter.entity_id.split(".", 1)[1]
                 fields = (descriptions.get(object_id) or {}).get("fields") or {}
                 adapter.reversible = "deactivate" in fields
+
+    @staticmethod
+    def _registry_name(entry: er.RegistryEntry, dev_reg: dr.DeviceRegistry) -> str | None:
+        """Friendly name as HA would build it, from the registries only."""
+        if entry.name:
+            return entry.name
+        if not entry.has_entity_name:
+            return entry.original_name
+        device = dev_reg.async_get(entry.device_id) if entry.device_id else None
+        device_name = (device.name_by_user or device.name) if device else None
+        parts = [p for p in (device_name, entry.original_name) if p]
+        return " ".join(parts) or None
 
     # --------------------------------------------------------------- sync --
     def _definitions(self) -> list[dict[str, Any]]:
