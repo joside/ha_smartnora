@@ -24,7 +24,7 @@ async def test_switch(hass: HomeAssistant) -> None:
 async def test_scene(hass: HomeAssistant) -> None:
     hass.states.async_set("script.abend", "off")
     adapter = SceneAdapter(hass, "script.abend", "Abend", None)
-    assert "roomHint" not in adapter.definition()
+    assert adapter.definition()["roomHint"] == ""
     assert adapter.definition()["type"] == "action.devices.types.SCENE"
     cmd = adapter.activate(deactivate=False)
     assert (cmd.domain, cmd.service) == ("script", "turn_on")
@@ -62,3 +62,13 @@ async def test_thermostat(hass: HomeAssistant) -> None:
     cmds = adapter.commands_for(adapter.state(), {"thermostatMode": "off", "thermostatTemperatureSetpoint": 23})
     assert [(c.service) for c in cmds] == ["set_hvac_mode", "set_temperature"]
     assert cmds[0].data["hvac_mode"] == "off"
+
+
+async def test_reversible_script(hass: HomeAssistant) -> None:
+    hass.states.async_set("script.kamin", "off")
+    adapter = SceneAdapter(hass, "script.kamin", "Kamin", "Wohnzimmer")
+    adapter.reversible = True
+    assert adapter.attributes() == {"sceneReversible": True}
+    cmd = adapter.activate(deactivate=True)
+    assert (cmd.domain, cmd.service) == ("script", "turn_on")
+    assert cmd.data["variables"] == {"deactivate": True}

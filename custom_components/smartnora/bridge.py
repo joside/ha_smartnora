@@ -25,6 +25,7 @@ from homeassistant.helpers import area_registry as ar
 from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.event import async_track_state_change_event
+from homeassistant.helpers.service import async_get_all_descriptions
 
 from .api import NoraClient, NoraError, apply_stream_event
 from .const import HEARTBEAT_INTERVAL_SEC, STATE_DEBOUNCE_SEC, SYNC_DEBOUNCE_SEC
@@ -61,6 +62,7 @@ class NoraBridge:
     # ---------------------------------------------------------- lifecycle --
     async def async_start(self) -> None:
         self._build_adapters()
+        await self._async_detect_reversible_scripts()
         try:
             await self.client.async_update_offset()
         except NoraError as err:
@@ -115,6 +117,15 @@ class NoraBridge:
             adapter = cls(self.hass, entity_id, name, area.name if area else None)
             self.adapters[adapter.device_id] = adapter
             self._by_entity[entity_id] = adapter
+
+    async def _async_detect_reversible_scripts(self) -> None:
+        """Scripts with a `deactivate` field become reversible Google scenes."""
+        descriptions = (await async_get_all_descriptions(self.hass)).get("script", {})
+        for adapter in self.adapters.values():
+            if adapter.is_scene and adapter.entity_id.startswith("script."):
+                object_id = adapter.entity_id.split(".", 1)[1]
+                fields = (descriptions.get(object_id) or {}).get("fields") or {}
+                adapter.reversible = "deactivate" in fields
 
     # --------------------------------------------------------------- sync --
     def _definitions(self) -> list[dict[str, Any]]:

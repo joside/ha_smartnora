@@ -80,13 +80,13 @@ class Adapter:
             "type": self.google_type,
             "traits": self.traits_for(),
             "name": {"name": self.name},
+            # always a string: the smart-nora.eu dashboard calls roomHint.trim()
+            "roomHint": self.room or "",
             "willReportState": True,
             "attributes": self.attributes(),
             "state": self.state(),
             "noraSpecific": self.nora_specific(),
         }
-        if self.room:
-            device["roomHint"] = self.room
         return device
 
     def commands_for(self, old: dict[str, Any], new: dict[str, Any]) -> list[Command]:
@@ -157,13 +157,21 @@ class SceneAdapter(Adapter):
     traits = ["action.devices.traits.Scene"]
     is_scene = True
 
+    #: set for scripts that declare a ``deactivate`` field
+    reversible = False
+
     def attributes(self):
-        return {"sceneReversible": False}
+        return {"sceneReversible": self.reversible}
 
     def activate(self, deactivate):
+        domain = self.entity_id.split(".")[0]
+        if self.reversible:
+            return Command("script", "turn_on", {
+                ATTR_ENTITY_ID: self.entity_id,
+                "variables": {"deactivate": deactivate},
+            })
         if deactivate:
             return None
-        domain = self.entity_id.split(".")[0]
         return Command(domain, "turn_on", {ATTR_ENTITY_ID: self.entity_id})
 
 

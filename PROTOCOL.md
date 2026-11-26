@@ -97,6 +97,9 @@ Job-Typ bzw. je Gerät für update-state (Jobs werden zusammengeführt).
 }
 ```
 
+`roomHint` muss **immer** ein String sein (notfalls `""`): Das Dashboard auf smart-nora.eu ruft
+`config.roomHint.trim()` auf und bleibt sonst auf „Loading...“ hängen.
+
 `noraSpecific` steuert Server-Verhalten, u. a. `twoFactor`, `asyncCommandExecution`,
 `returnOnOffErrorCodeIfStateAlreadySet`, `turnOnWhenBrightnessChanges`. Gültige Zustände prüft
 nora-firebase-common per JSON-Schema (`validate`), auch serverseitig.
