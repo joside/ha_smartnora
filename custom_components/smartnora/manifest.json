@@ -1,0 +1,12 @@
+{
+  "domain": "smartnora",
+  "name": "Smart NORA",
+  "codeowners": ["@joside"],
+  "config_flow": true,
+  "documentation": "https://github.com/joside/ha_smartnora#readme",
+  "integration_type": "service",
+  "iot_class": "cloud_push",
+  "issue_tracker": "https://github.com/joside/ha_smartnora/issues",
+  "requirements": [],
+  "version": "0.1.0"
+}

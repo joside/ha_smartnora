@@ -1,0 +1,33 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Smart NORA",
+        "description": "Melde dich mit deinem Smart-NORA-Konto an. Die Gruppe muss sich von der Gruppe in Node-RED unterscheiden, sonst werden die Node-RED-Geräte überschrieben.",
+        "data": {
+          "email": "E-Mail",
+          "password": "Passwort",
+          "group": "Gruppe"
+        }
+      }
+    },
+    "error": {
+      "invalid_auth": "E-Mail oder Passwort ungültig",
+      "cannot_connect": "Keine Verbindung zu Smart NORA"
+    },
+    "abort": {
+      "already_configured": "Dieses Konto mit dieser Gruppe ist bereits eingerichtet"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Freigegebene Entitäten",
+        "description": "Szenen und Skripte werden zu Google-Szenen („… aktivieren“), Schalter und Input-Booleans zu Schaltern, Lichter zu Leuchten, Klima-Entitäten zu Thermostaten.",
+        "data": {
+          "entities": "Entitäten"
+        }
+      }
+    }
+  }
+}

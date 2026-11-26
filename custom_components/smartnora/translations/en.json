@@ -1,0 +1,33 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Smart NORA",
+        "description": "Log in with your Smart NORA account. The group must differ from the group used by Node-RED, otherwise the Node-RED devices are overwritten.",
+        "data": {
+          "email": "Email",
+          "password": "Password",
+          "group": "Group"
+        }
+      }
+    },
+    "error": {
+      "invalid_auth": "Invalid email or password",
+      "cannot_connect": "Cannot connect to Smart NORA"
+    },
+    "abort": {
+      "already_configured": "This account and group are already configured"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Exposed entities",
+        "description": "Scenes and scripts become Google scenes (\"activate …\"), switches and input booleans become switches, lights become lights, climate entities become thermostats.",
+        "data": {
+          "entities": "Entities"
+        }
+      }
+    }
+  }
+}
