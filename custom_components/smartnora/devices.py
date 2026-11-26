@@ -114,40 +114,85 @@ class OnOffAdapter(Adapter):
         return []
 
 
+COLOR_MODES = {"hs", "xy", "rgb", "rgbw", "rgbww"}
+
+
 class LightAdapter(OnOffAdapter):
+    """Light with optional Brightness and ColorSetting (RGB, like nora-light colortype=rgb)."""
+
     google_type = "action.devices.types.LIGHT"
 
-    def _dimmable(self) -> bool:
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        self._last_brightness = 100
+        self._last_rgb = 0xFFFFFF
+
+    def _modes(self) -> set[str]:
         st = self.ha_state
-        modes = (st.attributes.get("supported_color_modes") or []) if st else []
-        return any(m != "onoff" for m in modes)
+        return set((st.attributes.get("supported_color_modes") or []) if st else [])
+
+    def _dimmable(self) -> bool:
+        return any(m != "onoff" for m in self._modes())
+
+    def _colored(self) -> bool:
+        return bool(self._modes() & COLOR_MODES)
 
     def traits_for(self):
         traits = ["action.devices.traits.OnOff"]
         if self._dimmable():
             traits.append("action.devices.traits.Brightness")
+        if self._colored():
+            traits.append("action.devices.traits.ColorSetting")
         return traits
 
+    def attributes(self):
+        if self._colored():
+            return {"colorModel": "rgb", "commandOnlyColorSetting": False}
+        return {}
+
     def nora_specific(self):
-        return {"turnOnWhenBrightnessChanges": True} if self._dimmable() else {}
+        spec = {}
+        if self._dimmable():
+            spec["turnOnWhenBrightnessChanges"] = True
+        if self._colored():
+            spec["turnOnWhenColorChanges"] = True
+        return spec
 
     def state(self):
         state = super().state()
+        st = self.ha_state
         if self._dimmable():
-            st = self.ha_state
             raw = st.attributes.get("brightness") if st else None
-            # keep last known brightness while off (HA reports None)
-            state["brightness"] = round(raw / 255 * 100) if raw else 100
+            if raw:  # HA reports None while off -> keep the last value
+                self._last_brightness = max(1, round(raw / 255 * 100))
+            state["brightness"] = self._last_brightness
+        if self._colored():
+            rgb = st.attributes.get("rgb_color") if st else None
+            if rgb:
+                r, g, b = (int(c) for c in rgb[:3])
+                self._last_rgb = (r << 16) + (g << 8) + b
+            state["color"] = {"spectrumRgb": self._last_rgb}
         return state
 
     def commands_for(self, old, new):
         on = new.get("on", old.get("on"))
+        if not on:
+            return super().commands_for(old, new)
+
+        data: dict[str, Any] = {ATTR_ENTITY_ID: self.entity_id}
         bri = new.get("brightness")
-        if on and bri is not None and bri != old.get("brightness"):
-            return [Command("light", "turn_on", {
-                ATTR_ENTITY_ID: self.entity_id, "brightness_pct": bri,
-            })]
-        return super().commands_for(old, new)
+        if bri is not None and bri != old.get("brightness"):
+            data["brightness_pct"] = bri
+        rgb = (new.get("color") or {}).get("spectrumRgb")
+        if rgb is not None and rgb != (old.get("color") or {}).get("spectrumRgb"):
+            data["rgb_color"] = [(rgb >> 16) & 0xFF, (rgb >> 8) & 0xFF, rgb & 0xFF]
+            st = self.ha_state
+            # a colour request means a solid colour (as the Node-RED flows did with fx: 0)
+            if st and "Solid" in (st.attributes.get("effect_list") or []):
+                data["effect"] = "Solid"
+        if len(data) > 1 or not old.get("on"):
+            return [Command("light", "turn_on", data)]
+        return []
 
 
 class SceneAdapter(Adapter):

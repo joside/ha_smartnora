@@ -17,6 +17,23 @@ Google Home / Google Assistant frei – ohne Node-RED und ohne öffentlich errei
 
 Raum = HA-Bereich der Entität (bzw. ihres Geräts), Name = Anzeigename.
 
+### Umkehrbare Szenen („… deaktivieren“)
+
+Hat ein **Skript** ein Feld `deactivate`, wird es als umkehrbare Google-Szene angelegt. Das Skript bekommt dann
+`deactivate: false` bei „aktivieren“ und `deactivate: true` bei „deaktivieren“:
+
+```yaml
+fields:
+  deactivate:
+    default: false
+    selector:
+      boolean:
+sequence:
+  - if: "{{ deactivate | default(false) | bool }}"
+    then: [...]   # deaktivieren
+    else: [...]   # aktivieren
+```
+
 ## Installation
 
 ### HACS (empfohlen)
